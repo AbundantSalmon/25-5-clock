@@ -30,9 +30,13 @@ const App: React.VFC = () => {
 
   return (
     <div id="timer-main" className="my-3 p-3 bg-white shadow-lg container-sm">
-      <Display timerState={timerState} />
+      <Display label={timerState.label} currentTime={timerState.currentTime} />
       <Controls
-        timerState={timerState}
+        timer={timerState.timer}
+        started={timerState.started}
+        paused={timerState.paused}
+        breakLength={timerState.breakLength}
+        sessionLength={timerState.sessionLength}
         dispatchTimerState={dispatchTimerState}
         audioRef={audioRef}
       />

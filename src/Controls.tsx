@@ -1,15 +1,24 @@
 import React, { useEffect, useCallback } from 'react';
 import { Button } from './Buttons';
 import './Controls.css';
+import Timer from 'easytimer.js';
 
 type ControlsProps = {
-  timerState: TimerState;
+  timer: Timer;
+  started: boolean;
+  paused: boolean;
+  breakLength: number;
+  sessionLength: number;
   dispatchTimerState: React.Dispatch<ACTIONTYPE>;
   audioRef: React.RefObject<HTMLAudioElement>;
 };
 
 export const Controls: React.VFC<ControlsProps> = ({
-  timerState,
+  timer,
+  started,
+  paused,
+  breakLength,
+  sessionLength,
   dispatchTimerState,
   audioRef,
 }) => {
@@ -36,38 +45,38 @@ export const Controls: React.VFC<ControlsProps> = ({
       changeLabel();
     };
 
-    timerState.timer.addEventListener('targetAchieved', changeSegement);
+    timer.addEventListener('targetAchieved', changeSegement);
     // returned function will be called on component unmount
     return () => {
-      timerState.timer.removeEventListener('targetAchieved', changeSegement);
+      timer.removeEventListener('targetAchieved', changeSegement);
     };
-  }, [audioRef, dispatchTimerState, timerStart, timerState.timer]);
+  }, [audioRef, dispatchTimerState, timerStart, timer]);
 
   const startPauseCommand = () => {
     console.log(
-      'startpausebutton, timerState.started: ' +
-        timerState.started +
-        ', timerState.paused: ' +
-        timerState.paused
+      'startpausebutton, started: ' +
+      started +
+      ', paused: ' +
+      paused
     );
-    if (timerState.started === false) {
+    if (started === false) {
       console.log('start');
       timerStart();
       dispatchTimerState({ type: 'setStarted', state: true });
       console.log('start1');
-    } else if (timerState.started === true && timerState.paused === false) {
+    } else if (started === true && paused === false) {
       console.log('pause');
-      timerState.timer.pause();
+      timer.pause();
       dispatchTimerState({ type: 'setPaused', state: true });
-    } else if (timerState.started === true && timerState.paused === true) {
+    } else if (started === true && paused === true) {
       console.log('restart');
-      timerState.timer.start();
+      timer.start();
       dispatchTimerState({ type: 'setPaused', state: false });
     }
   };
 
   const resetCommand = () => {
-    timerState.timer.stop();
+    timer.stop();
     if (audioRef.current !== null) {
       //is audio doesn't load then it doesn't play
       audioRef.current.pause();
@@ -80,23 +89,23 @@ export const Controls: React.VFC<ControlsProps> = ({
     <div id="controls">
       <div id="break-label">Break</div>
       <div id="break-length" className="length">
-        {timerState.breakLength}
+        {breakLength}
       </div>
       <div id="session-label">Session</div>
       <div id="session-length" className="length">
-        {timerState.sessionLength}
+        {sessionLength}
       </div>
       <div className="center">
         <Button
           id="start_stop"
           label={
-            !timerState.started ? (
+            !started ? (
               <i className="fas fa-play-circle"></i>
-            ) : timerState.paused ? (
+            ) : paused ? (
               <i className="fas fa-play-circle"></i>
             ) : (
-              <i className="fas fa-pause-circle"></i>
-            )
+                  <i className="fas fa-pause-circle"></i>
+                )
           }
           onClick={startPauseCommand}
         />
