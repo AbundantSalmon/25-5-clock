@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useReducer, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
 
@@ -6,34 +6,42 @@ import Timer from 'easytimer.js';
 import { Display } from './Display';
 import { Controls } from './Controls';
 
-let useReducer = React.useReducer;
-let useRef = React.useRef;
-let useState = React.useState;
-
 const BREAKMINIMUM = 1;
 const BREAKMAXIMUM = 60;
 const SESSIONMINIMUM = 1;
 const SESSIONMAXIMUM = 60;
 
-const initialTimerState = {
+const initialTimerState: TimerState = {
   breakLength: 5,
   sessionLength: 25,
-  currentTime: "25:00",
+  currentTime: '25:00',
   started: false,
   paused: false,
-  label: "SESSION"
+  label: 'SESSION',
+  timer: new Timer(),
 };
 
-function App() {
-  const [timer] = useState(new Timer());
-  const [timerState, dispatchTimerState] = useReducer(reducerTimerState, initialTimerState);
+const App: React.VFC = () => {
+  const [timerState, dispatchTimerState] = useReducer(
+    reducerTimerState,
+    initialTimerState
+  );
   const audioRef = useRef<HTMLAudioElement>(null);
 
   return (
     <div id="timer-main" className="my-3 p-3 bg-white shadow-lg container-sm">
       <Display timerState={timerState} />
-      <Controls timerState={timerState} dispatchTimerState={dispatchTimerState} timer={timer} audioRef={audioRef} />
-      <audio id="beep" preload="auto" ref={audioRef} src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav" />
+      <Controls
+        timerState={timerState}
+        dispatchTimerState={dispatchTimerState}
+        audioRef={audioRef}
+      />
+      <audio
+        id="beep"
+        preload="auto"
+        ref={audioRef}
+        src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav"
+      />
     </div>
   );
 };
@@ -59,20 +67,38 @@ function reducerTimerState(state: TimerState, action: ACTIONTYPE): TimerState {
       return state;
     case 'sessionDecrement':
       if (state.sessionLength > SESSIONMINIMUM && !state.started) {
-        return { ...state, sessionLength: state.sessionLength - 1, currentTime: minutesToClock(state.sessionLength - 1) };
+        return {
+          ...state,
+          sessionLength: state.sessionLength - 1,
+          currentTime: minutesToClock(state.sessionLength - 1),
+        };
       }
       return state;
     case 'sessionIncrement':
       if (state.sessionLength < SESSIONMAXIMUM && !state.started) {
-        if (state.sessionLength + 1 === 60) {// special case for 60 minutes
-          return { ...state, sessionLength: state.sessionLength + 1, currentTime: "60:00" };
+        if (state.sessionLength + 1 === 60) {
+          // special case for 60 minutes
+          return {
+            ...state,
+            sessionLength: state.sessionLength + 1,
+            currentTime: '60:00',
+          };
         } else {
-          return { ...state, sessionLength: state.sessionLength + 1, currentTime: minutesToClock(state.sessionLength + 1) };
+          return {
+            ...state,
+            sessionLength: state.sessionLength + 1,
+            currentTime: minutesToClock(state.sessionLength + 1),
+          };
         }
       }
       return state;
     case 'setCurrentTime':
-      return { ...state, currentTime: action.timer.getTimeValues().toString(['minutes', 'seconds']) };
+      return {
+        ...state,
+        currentTime: state.timer
+          .getTimeValues()
+          .toString(['minutes', 'seconds']),
+      };
     case 'setStarted':
       return { ...state, started: action.state };
     case 'setPaused':
@@ -80,17 +106,22 @@ function reducerTimerState(state: TimerState, action: ACTIONTYPE): TimerState {
     case 'setDefault':
       return { ...initialTimerState };
     case 'timerStart':
-      action.timer.start({
+      state.timer.start({
         countdown: true,
-        startValues: { minutes: state.label === "SESSION" ? state.sessionLength : state.breakLength },
-        callback: () => { action.dispatchTimerState({ type: "setCurrentTime", timer: action.timer }) }
+        startValues: {
+          minutes:
+            state.label === 'SESSION' ? state.sessionLength : state.breakLength,
+        },
+        callback: () => {
+          action.dispatchTimerState({ type: 'setCurrentTime' });
+        },
       });
       return state;
     case 'changeLabel':
-      if (state.label === "SESSION") {
-        return { ...state, label: "BREAK" };
-      } else if (state.label === "BREAK") {
-        return { ...state, label: "SESSION" };
+      if (state.label === 'SESSION') {
+        return { ...state, label: 'BREAK' };
+      } else if (state.label === 'BREAK') {
+        return { ...state, label: 'SESSION' };
       }
       throw new Error();
 
